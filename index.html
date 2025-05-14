@@ -1,41 +1,98 @@
 <!DOCTYPE html>
 <html lang="en-us">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity Web Player | LappsetSandbox</title>
-  </head>
-  <body style="text-align: center; padding: 0; border: 0; margin: 0;">
-    <canvas id="unity-canvas" width=1280 height=720 tabindex="-1" style="width: 1280px; height: 720px; background: #231F20"></canvas>
-    <script src="Build/LappsetSandbox.loader.js"></script>
-    <script>
-      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        // Mobile device style: fill the whole browser client area with the game canvas:
-        var meta = document.createElement('meta');
-        meta.name = 'viewport';
-        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
-        document.getElementsByTagName('head')[0].appendChild(meta);
 
-        var canvas = document.querySelector("#unity-canvas");
-        canvas.style.width = "100%";
-        canvas.style.height = "100%";
-        canvas.style.position = "fixed";
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>Unity Web Player | LappsetSandbox</title>
+  <style>
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+    }
 
-        document.body.style.textAlign = "left";
-      }
+    #loader {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #202020;
+    }
 
-      createUnityInstance(document.querySelector("#unity-canvas"), {
+    #loader-bar {
+      width: 60%;
+      max-width: 320px;
+      height: 12px;
+      background: #444;
+    }
+
+    #loader-fill {
+      width: 0;
+      height: 100%;
+      background: #79c;
+    }
+
+    /* Canvas has a fallback colour in case WebGL fails */
+    #unity-canvas {
+      background: #231F20;
+    }
+  </style>
+</head>
+
+<body style="text-align:center;">
+  <!-- progress overlay -->
+  <div id="loader">
+    <div id="loader-bar">
+      <div id="loader-fill"></div>
+    </div>
+  </div>
+
+  <!-- Unity’s drawing surface -->
+  <canvas id="unity-canvas" width="1280" height="720" tabindex="-1"></canvas>
+
+  <!-- Unity bootstrap script -->
+  <script src="Build/LappsetSandbox.loader.js"></script>
+  <script>
+    /* -------------------------------------------------- mobile fill‑screen tweak */
+    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+      const m = document.createElement('meta');
+      m.name = 'viewport';
+      m.content = 'width=device-width,height=device-height,initial-scale=1.0,user-scalable=no,shrink-to-fit=yes';
+      document.head.appendChild(m);
+
+      const c = document.querySelector('#unity-canvas');
+      Object.assign(c.style, { width: '100%', height: '100%', position: 'fixed' });
+
+      document.body.style.textAlign = 'left';
+    }
+
+    /* -------------------------------------------------- progress‑bar linkage */
+    const fill = document.getElementById('loader-fill');
+    const root = document.getElementById('loader');
+
+    createUnityInstance(
+      document.querySelector('#unity-canvas'),
+      {
         arguments: [],
-        dataUrl: "Build/LappsetSandbox.data.unityweb",
-        frameworkUrl: "Build/LappsetSandbox.framework.js.unityweb",
-        codeUrl: "Build/LappsetSandbox.wasm.unityweb",
-        streamingAssetsUrl: "StreamingAssets",
-        companyName: "DefaultCompany",
-        productName: "LappsetSandbox",
-        productVersion: "0.1.0",
-        // matchWebGLToCanvasSize: false, // Uncomment this to separately control WebGL canvas render size and DOM element size.
-        // devicePixelRatio: 1, // Uncomment this to override low DPI rendering on high DPI displays.
-      });
-    </script>
-  </body>
+        dataUrl: 'Build/LappsetSandbox.data.unityweb',
+        frameworkUrl: 'Build/LappsetSandbox.framework.js.unityweb',
+        codeUrl: 'Build/LappsetSandbox.wasm.unityweb',
+        streamingAssetsUrl: 'StreamingAssets',
+        companyName: 'DefaultCompany',
+        productName: 'LappsetSandbox',
+        productVersion: '0.1.0',
+        // matchWebGLToCanvasSize: false,
+        // devicePixelRatio: 1,
+      },
+      /* onProgress callback — Unity passes 0 → 1 */
+      (p) => {
+        fill.style.width = (p * 100) + '%';
+        if (p === 1) root.style.display = 'none';     // hide when done
+      }
+    ).catch(alert);    // surface build errors, if any
+  </script>
+</body>
+
 </html>
